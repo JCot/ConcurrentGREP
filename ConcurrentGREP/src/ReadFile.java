@@ -24,7 +24,7 @@ public class ReadFile implements Callable{
 
 	@Override
 	public Object call() throws Exception {
-		
+		Found results = new Found(fileName);
 		BufferedReader br = new BufferedReader(new FileReader(file));  
 		String line = null;  
 		int lineNum = 0;
@@ -34,10 +34,11 @@ public class ReadFile implements Callable{
 			lineNum++;
 		    if (m.matches()) {
 		    	matchingLines.add("" + lineNum + " " + line);
+		    	results.addItem("" + lineNum + " " + line);
 		    }
 		} 
 		
-		return null;
+		return results;
 	}
 	
 	public List<String> getMatchingLines() {
