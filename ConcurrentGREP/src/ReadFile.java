@@ -9,7 +9,7 @@ import java.util.concurrent.Callable;
 import java.util.regex.*;
 
 
-public class ReadFile implements Callable{
+public class ReadFile implements Callable<Found>{
 	private File file;
 	private InputStream inputStream;
 	private String fileName;
@@ -26,7 +26,7 @@ public class ReadFile implements Callable{
 	}
 
 	@Override
-	public Object call() throws Exception {
+	public Found call() throws Exception {
 		Found results = new Found(fileName);
 		
 		BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));  
