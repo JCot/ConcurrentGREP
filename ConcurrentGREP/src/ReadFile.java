@@ -11,11 +11,11 @@ import java.util.regex.*;
 
 public class ReadFile implements Callable<Found>{
 	private File file;
-	private InputStream inputStream;
-	private String fileName;
-	private String regex;
+	private InputStream inputStream; // The input stream to read from.
+	private String fileName; // The name of the file being read (if the input stream is a file).
+	private String regex; // The regex to check against each line.
 	private Pattern p;
-	private List<String> matchingLines = new ArrayList<String>();
+	private List<String> matchingLines = new ArrayList<String>(); // List of matching lines.
 	
 	
 	public ReadFile(String fileName, InputStream in, String regex) {
@@ -25,6 +25,13 @@ public class ReadFile implements Callable<Found>{
 		p = Pattern.compile(regex);
 	}
 
+	/*
+	 * Scans lines in from the specified inputStream. If the line
+	 * contains any matches to the specified regex add that line to
+	 * the results in the Found object. Returns the Found object when
+	 * finished.
+	 * 
+	 */
 	@Override
 	public Found call() throws Exception {
 		Found results = new Found(fileName);
