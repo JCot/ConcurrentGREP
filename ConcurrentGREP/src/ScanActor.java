@@ -37,7 +37,7 @@ public class ScanActor extends UntypedActor {
 		    }
 		} 
 		
-		this.config.getCollActor().tell(results, getSelf());
+		this.config.getCollActor().tell(results, self());
 		
 	}
 	
