@@ -10,6 +10,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import akka.actor.ActorRef;
+
 
 /**
  * CGrep is the main class file that will create an Executor Service
@@ -32,6 +34,50 @@ public class CGrep {
 	 */
 	private final static CompletionService<Found> compService = new ExecutorCompletionService<Found> (es); 
 
+	static class Configure {
+		
+		private final String fileName;
+		
+		private final InputStream inputStream;
+		
+		private final ActorRef collActor;
+		
+		private final String regex;
+		
+		public Configure(String fileName, InputStream inStream, ActorRef collActor, String regex) {
+			this.fileName = fileName;
+			this.inputStream = inStream;
+			this.collActor = collActor;
+			this.regex = regex;
+		}
+		
+		public String getFileName() {
+			return fileName;
+		}
+
+		public InputStream getInputStream() {
+			return inputStream;
+		}
+
+		public ActorRef getCollActor() {
+			return collActor;
+		}
+
+		public String getRegex() {
+			return regex;
+		}
+
+	}
+	
+	static class FileCount {
+		
+		private final int numFiles;
+		
+		public FileCount(int numFiles) {
+			this.numFiles = numFiles;
+		}
+	}
+	
 	/**
 	 * Main method that runs the program.  It takes in a regex and optional
 	 * file names and compares that regex against those files or standard in.
