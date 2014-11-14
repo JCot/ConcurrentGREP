@@ -76,6 +76,10 @@ public class CGrep {
 		public FileCount(int numFiles) {
 			this.numFiles = numFiles;
 		}
+		
+		public int getNumFiles(){
+			return numFiles;
+		}
 	}
 	
 	/**
@@ -87,6 +91,7 @@ public class CGrep {
 	 */
 	public static void main(String[] args) {
 		ArrayList<String> filenames = new ArrayList<String>();
+		ArrayList<Configure> configs = new ArrayList<Configure>();
 		
 		//Terminate the program if an improper amount of arguments are passed in
 		if(args.length == 0) {
@@ -101,16 +106,18 @@ public class CGrep {
 			}
 		}
 		
-		ArrayList<Future<Found>> futures = new ArrayList<Future<Found>>(filenames.size());
-
-		//Submit tasks that correspond to each file
-		for(String filename : filenames){
-			File file = new File(filename);
+		CollectionActor collection = new CollectionActor();
+//		collection.onReceive(new FileCount(filenames.size()));
+		
+		for(String fileName: filenames){
+			File file = new File(fileName);
 			InputStream iStream;
-			try {
+			
+			try{
 				iStream = new FileInputStream(file);
-				futures.add(compService.submit(new ReadFile(filename, iStream, regex)));
-			} catch (FileNotFoundException e) {
+				configs.add(new Configure(fileName, iStream, collection.getContext(), regex));
+			}
+			catch(FileNotFoundException e){
 				e.printStackTrace();
 			}
 		}
@@ -118,21 +125,12 @@ public class CGrep {
 		if(filenames.size() == 0) {
 			//If no files were submitted, submit standard in and read
 			//its output
-			futures.add(compService.submit(new ReadFile("Standard In", System.in, regex)));
-			Future<Found> future;
 			Found stdIn = null;
-			try {
-				future = compService.take();
-				stdIn = future.get();
-			} catch (ExecutionException e) {
-				e.printStackTrace();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			} finally {
-				for(Future<Found> f : futures) {
-					f.cancel(true);
-				}
-			}
+			
+			ScanActor actor = new ScanActor();
+			
+			
+			
 			if (stdIn != null) {
 				for(String line : stdIn.getResults()){
 					System.out.println(stdIn.getName() + ": " + line);
@@ -142,25 +140,28 @@ public class CGrep {
 			//Otherwise get the futures for each file
 			//and read wach output
 			for(int i = 0; i < filenames.size(); i++) {
-				Future<Found> future;
+//				Future<Found> future;
+				
+				Configure config = configs.get(i);
+				
 				Found file = null;
-				try {
-					future = compService.take();
-					file = future.get();
-				} catch (ExecutionException e) {
-					e.printStackTrace();
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				} finally {
-					for(Future<Found> f : futures) {
-						f.cancel(true);
-					}
-				}
-				if (file != null) {
-					for(String line : file.getResults()){
-						System.out.println(file.getName() + ": " + line);
-					}
-				}
+//				try {
+//					future = compService.take();
+//					file = future.get();
+//				} catch (ExecutionException e) {
+//					e.printStackTrace();
+//				} catch (InterruptedException e) {
+//					e.printStackTrace();
+//				} finally {
+//					for(Future<Found> f : futures) {
+//						f.cancel(true);
+//					}
+//				}
+//				if (file != null) {
+//					for(String line : file.getResults()){
+//						System.out.println(file.getName() + ": " + line);
+//					}
+//				}
 					
 			}
 		}
