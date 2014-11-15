@@ -9,16 +9,14 @@ public class CollectionActor extends UntypedActor {
 
 	@Override
 	public void onReceive(Object message) throws Exception {
-		
-		
 		if(message instanceof CGrep.FileCount) {
 			numFiles = ((CGrep.FileCount)message).getNumFiles();
 		} else if (message instanceof Found) {
-			Found file = (Found)message;
+			Found results = (Found)message;
 			
-			if (file != null) {
-				for(String line : file.getResults()){
-					System.out.println(file.getName() + ": " + line);
+			if (results != null) {
+				for(String line : results.getResults()){
+					System.out.println(results.getName() + ": " + line);
 				}
 			}
 			
@@ -27,8 +25,6 @@ public class CollectionActor extends UntypedActor {
 			if(filesProcessed == numFiles){
 				Actors.registry().shutdownAll();
 			}
-		}
-		
+		}	
 	}
-
 }

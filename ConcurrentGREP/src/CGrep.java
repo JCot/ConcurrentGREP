@@ -4,13 +4,15 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.concurrent.CompletionService;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
-import akka.actor.ActorRef;
+
+
+//import akka.actor.ActorRef;
+import akka.actor.*;
+import static akka.actor.Actors.*;
 
 
 /**
@@ -22,17 +24,6 @@ import akka.actor.ActorRef;
  *
  */
 public class CGrep {
-	
-	/** Number of threads in the thread pool */
-	private final static int numThreads = 3;
-	
-	/** Executor Service with a fixed thread pool size */
-	private final static ExecutorService es = Executors.newFixedThreadPool(numThreads);
-	
-	/** ExecutorCompletionService that wraps the ExecutorService so that
-	 *  any attempt to get a future is blocked until one is actually computed.
-	 */
-	private final static CompletionService<Found> compService = new ExecutorCompletionService<Found> (es); 
 
 	static class Configure {
 		
@@ -91,7 +82,7 @@ public class CGrep {
 	 */
 	public static void main(String[] args) {
 		ArrayList<String> filenames = new ArrayList<String>();
-		ArrayList<Configure> configs = new ArrayList<Configure>();
+		ActorRef collection;
 		
 		//Terminate the program if an improper amount of arguments are passed in
 		if(args.length == 0) {
@@ -106,65 +97,59 @@ public class CGrep {
 			}
 		}
 		
-		CollectionActor collection = new CollectionActor();
-//		collection.onReceive(new FileCount(filenames.size()));
+		collection = actorOf(
+				new UntypedActorFactory(){
+					public UntypedActor create(){
+						return new CollectionActor();
+					}
+				
+				});
 		
-		for(String fileName: filenames){
-			File file = new File(fileName);
-			InputStream iStream;
-			
-			try{
-				iStream = new FileInputStream(file);
-				configs.add(new Configure(fileName, iStream, collection.getContext(), regex));
-			}
-			catch(FileNotFoundException e){
-				e.printStackTrace();
-			}
-		}
+		collection.start();
+		
+		collection.tell(new FileCount(filenames.size()));
 	
 		if(filenames.size() == 0) {
 			//If no files were submitted, submit standard in and read
 			//its output
-			Found stdIn = null;
+			ActorRef scanActor = actorOf(
+					new UntypedActorFactory(){
+						public UntypedActor create(){
+							return new ScanActor();
+						}
+					
+					});			
 			
-			ScanActor actor = new ScanActor();
+			scanActor.start();
 			
+			scanActor.tell(new Configure("Standard in", System.in, collection, regex));
 			
-			
-			if (stdIn != null) {
-				for(String line : stdIn.getResults()){
-					System.out.println(stdIn.getName() + ": " + line);
+		} else {
+			//Otherwise create a new actor for each file
+			for(String fileName: filenames){
+				File file = new File(fileName);
+				InputStream iStream;
+
+				try{
+					iStream = new FileInputStream(file);
+					Configure config = new Configure(fileName, iStream, collection, regex);
+
+					ActorRef scanActor = actorOf(
+							new UntypedActorFactory(){
+								public UntypedActor create(){
+									return new ScanActor();
+								}
+
+							});
+
+					scanActor.start();
+
+					scanActor.tell(config);
+				}
+				catch(FileNotFoundException e){
+					e.printStackTrace();
 				}
 			}
-		} else {
-			//Otherwise get the futures for each file
-			//and read wach output
-			for(int i = 0; i < filenames.size(); i++) {
-//				Future<Found> future;
-				
-				Configure config = configs.get(i);
-				
-				Found file = null;
-//				try {
-//					future = compService.take();
-//					file = future.get();
-//				} catch (ExecutionException e) {
-//					e.printStackTrace();
-//				} catch (InterruptedException e) {
-//					e.printStackTrace();
-//				} finally {
-//					for(Future<Found> f : futures) {
-//						f.cancel(true);
-//					}
-//				}
-//				if (file != null) {
-//					for(String line : file.getResults()){
-//						System.out.println(file.getName() + ": " + line);
-//					}
-//				}
-					
-			}
 		}
-		es.shutdown();
 	}
 }
