@@ -34,7 +34,6 @@ public class ScanActor extends UntypedActor {
 		    	results.addItem("" + lineNum + " " + line);
 		    }
 		} 
-		
 		this.config.getCollActor().tell(results, self());
 		
 	}

@@ -107,7 +107,10 @@ public class CGrep {
 		
 		collection.start();
 		
-		collection.tell(new FileCount(filenames.size()));
+		//If there are no files pass 1 as the filecount for Standard In
+		int fileCount = filenames.size() == 0 ? 1 : filenames.size();
+		
+		collection.tell(new FileCount(fileCount));
 	
 		if(filenames.size() == 0) {
 			//If no files were submitted, submit standard in and read
