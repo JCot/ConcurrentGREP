@@ -16,25 +16,41 @@ import static akka.actor.Actors.*;
 
 
 /**
- * CGrep is the main class file that will create an Executor Service
- * and run threads of ReadFile to find lines that contain the
- * matching regex that is provided by the user.
+ * CGrep is the main class file that will create actors that
+ * will concurrently match a regex pattern in a set of
+ * files or from standard input.
  * 
  * @author Andrew Popovich (ajp7560@rit.edu)
- *
+ *		   Justin Cotner
+ *		   Shannon Trudeau
  */
 public class CGrep {
 
+	/**
+	 * Immutable class that is used to to configure a ScanActor
+	 */
 	static class Configure {
 		
+		/** Name of the file to parse */
 		private final String fileName;
 		
+		/** Name of the input stream to parse from */
 		private final InputStream inputStream;
 		
+		/** Reference to the collection actor to send results to */
 		private final ActorRef collActor;
 		
+		/** Pattern to match */
 		private final String regex;
 		
+		/**
+		 * Constructor for a Configure immutable message.
+		 * 
+		 * @param fileName - String of the file name that will be parsed
+		 * @param inStream - InputStream for the file to be parse
+		 * @param collActor - Reference to the collection actor
+		 * @param regex - String of the regex pattern to match
+		 */
 		public Configure(String fileName, InputStream inStream, ActorRef collActor, String regex) {
 			this.fileName = fileName;
 			this.inputStream = inStream;
@@ -60,10 +76,19 @@ public class CGrep {
 
 	}
 	
+	/**
+	 * Immutable class for the FileCount message.
+	 */
 	static class FileCount {
 		
+		/** Number of files to be parsed */
 		private final int numFiles;
 		
+		/**
+		 * Constructor for the FileCount immutable message.
+		 * 
+		 * @param numFiles - int representing the number of files being parsed
+		 */
 		public FileCount(int numFiles) {
 			this.numFiles = numFiles;
 		}
@@ -97,6 +122,7 @@ public class CGrep {
 			}
 		}
 		
+		//Create and start the collection actor
 		collection = actorOf(
 				new UntypedActorFactory(){
 					public UntypedActor create(){
@@ -104,10 +130,9 @@ public class CGrep {
 					}
 				
 				});
-		
 		collection.start();
 		
-		//If there are no files pass 1 as the filecount for Standard In
+		//If there are no files pass 1 as the file count for Standard In
 		int fileCount = filenames.size() == 0 ? 1 : filenames.size();
 		
 		collection.tell(new FileCount(fileCount));
